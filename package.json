@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "bundle_web_app": "browserify index.js > web_app/index.min.js",
+    "bundle_web_app": "browserify -d index.js > web_app/index.min.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
