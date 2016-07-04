@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "bundle_web_app": "browserify -d index.js > web_app/index.min.js",
+    "minify_web_app": "ccjs web_app/index.min.js > web_app/index.min.js.tmp; mv web_app/index.min.js.tmp web_app/index.min.js",
+    "build_web_app": "npm run bundle_web_app; npm run minify_web_app",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
