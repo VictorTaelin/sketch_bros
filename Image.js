@@ -4,12 +4,16 @@ module.exports = (function(){
   // Number, Number -> Image
   function Image(width, height){
     var buffer = new ArrayBuffer(width*height*4);
+    var blend = new Int32Array(width*height*17);
+    for (var i=0; i<width*height*17; ++i)
+      blend[i] = -999999;
     return {
       width: width,
       height: height,
       buffer: buffer,
-      array8: new Uint8ClampedArray(buffer),
-      array32: new Uint32Array(buffer)};
+      blend: blend,
+      color8: new Uint8ClampedArray(buffer),
+      color32: new Uint32Array(buffer)};
   };
 
   // Canvas -> Context2D
@@ -24,7 +28,7 @@ module.exports = (function(){
     getCanvasContext2D(canvas)
       .putImageData(
         new ImageData(
-          image.array8,
+          image.color8,
           image.width,
           image.height),
         x, 
@@ -34,26 +38,21 @@ module.exports = (function(){
 
   // RGBA8, Image* -> Image
   function fill(col, image){
-    for (var i=0, a=image.array32, l=a.length; i<l; ++i)
+    for (var i=0, a=image.color32, l=a.length; i<l; ++i)
       a[i] = 0;
     return image;
   };
 
   // [Voxels] -> *Image -> Image
-  function renderVoxels(voxelsArray, image){
+  function renderVoxels(voxelsArray, image, lights){
     var w = image.width;
     var h = image.height;
     var vx = Vec.x;
     var vy = Vec.y;
     var vz = Vec.z;
 
-    if (!image.__blend){
-      image.__blend = new Int32Array(w*h*17);
-      for (var i=0; i<w*h*17; ++i)
-        image.__blend[i] = -999999;
-    };
-    var blend = image.__blend;
-    var buffer = image.array32;
+    var blend = image.blend;
+    var buffer = image.color32;
     var positions = [];
     for (var i=0, l=voxelsArray.length; i<l; ++i){
       voxelsArray[i](function(pos, col, buffer){
