@@ -3,12 +3,16 @@ module.exports = (function(){
   // Number, Number -> Image
   function Image(width, height){
     var buffer = new ArrayBuffer(width*height*4);
+    var depth = new ArrayBuffer(width*height*4);
+    var depth32 = new Float32Array(depth);
     return {
       width: width,
       height: height,
       buffer: buffer,
       array8: new Uint8ClampedArray(buffer),
-      array32: new Uint32Array(buffer)};
+      array32: new Uint32Array(buffer),
+      depth: depth,
+      depth32: depth32};
   };
 
   // Canvas -> Context2D
@@ -45,7 +49,8 @@ module.exports = (function(){
     var vy = Vec.y;
     var vz = Vec.z;
     var buffer = image.array32;
-    var depth = {};
+    var depth = image.__depth || (image.__depth = new Int32Array(w*h));
+    depth.fill(-99999);
     for (var i=0, l=voxelsArray.length; i<l; ++i){
       voxelsArray[i](function(pos, col, buffer){
         var x = vx(pos);

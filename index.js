@@ -16,7 +16,7 @@ if (typeof window !== "undefined")
     document.body.style = "display: flex; justify-content: center; align-items: center";
 
     var atoms = [];
-    for (var i=0; i<16; ++i){
+    for (var i=0; i<32; ++i){
       var r = ~~(Math.random()*256);
       var g = ~~(Math.random()*256);
       var b = ~~(Math.random()*256);
@@ -26,7 +26,7 @@ if (typeof window !== "undefined")
           Math.random()*120-60,
           Math.random()*120-60,
           Math.random()*120-60),
-        rad:~~(Math.random()*20+12),
+        rad:~~(Math.random()*30+12),
         vel:Vec.Vec(0, 0, 0),
         col:col});
     };
