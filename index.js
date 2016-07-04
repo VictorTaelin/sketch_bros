@@ -1,6 +1,7 @@
 var Vec = require("./Vector.js");
 var Image = require("./Image.js");
 var Geoms = require("./Geometries.js");
+var Debug = require("./Debug.js");
 
 // type Voxels = ∀ a . ((CVec, RGBA8, a -> a) -> a -> a)
 // type CVecs = ∀ a . ((CVec, a -> a) -> a -> a)
@@ -16,17 +17,18 @@ if (typeof window !== "undefined")
     document.body.style = "display: flex; justify-content: center; align-items: center";
 
     var atoms = [];
-    for (var i=0; i<32; ++i){
-      var r = ~~(Math.random()*256);
-      var g = ~~(Math.random()*256);
-      var b = ~~(Math.random()*256);
-      var col = 0xFF000000 + r*256*256 + b*256 + g;
+    for (var i=0; i<12; ++i){
+      var r = ~~(Math.random()*200);
+      var g = ~~(Math.random()*200);
+      var b = ~~(Math.random()*200);
+      var a = 220;
+      var col = a*256*256*256 + r*256*256 + b*256 + g;
       atoms.push({
         pos:Vec.Vec(
-          Math.random()*120-60,
-          Math.random()*120-60,
-          Math.random()*120-60),
-        rad:~~(Math.random()*30+12),
+          (Math.random()-0.5)*120,
+          (Math.random()-0.5)*120,
+          (Math.random()-0.5)*120),
+        rad:~~(Math.random()*32+16),
         vel:Vec.Vec(0, 0, 0),
         col:col});
     };
@@ -38,9 +40,9 @@ if (typeof window !== "undefined")
 
     var sign = Math.sign;
     function interact(a, b){
-      b.vel.x += sign(a.pos.x-b.pos.x)*(a.pos.x-b.pos.x)*(a.pos.x-b.pos.x) * 0.000004;
-      b.vel.y += sign(a.pos.y-b.pos.y)*(a.pos.y-b.pos.y)*(a.pos.y-b.pos.y) * 0.000004;
-      b.vel.z += sign(a.pos.z-b.pos.z)*(a.pos.z-b.pos.z)*(a.pos.z-b.pos.z) * 0.000004;
+      b.vel.x = (b.vel.x + sign(a.pos.x-b.pos.x)*(a.pos.x-b.pos.x)*(a.pos.x-b.pos.x) * 0.000001) * 0.9999;
+      b.vel.y = (b.vel.y + sign(a.pos.y-b.pos.y)*(a.pos.y-b.pos.y)*(a.pos.y-b.pos.y) * 0.000001) * 0.9999;
+      b.vel.z = (b.vel.z + sign(a.pos.z-b.pos.z)*(a.pos.z-b.pos.z)*(a.pos.z-b.pos.z) * 0.000001) * 0.9999;
     };
 
     function integrate(a){
@@ -73,6 +75,13 @@ if (typeof window !== "undefined")
 
     var image = Image.Image(canvas.width, canvas.height);
 
+    console.log(Debug.benchmark(function(){
+      tick(atoms);
+      render(atoms, image);
+    }));
+
+    var lastBenchmark = Date.now();
+    var ticks = 0;
     setInterval(function(){
       tick(atoms);
       Image.fill(0, image);

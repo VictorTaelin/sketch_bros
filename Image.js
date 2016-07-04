@@ -1,18 +1,15 @@
 var Vec = require("./Vector.js");
+var Pix = require("./Pixel.js");
 module.exports = (function(){
   // Number, Number -> Image
   function Image(width, height){
     var buffer = new ArrayBuffer(width*height*4);
-    var depth = new ArrayBuffer(width*height*4);
-    var depth32 = new Float32Array(depth);
     return {
       width: width,
       height: height,
       buffer: buffer,
       array8: new Uint8ClampedArray(buffer),
-      array32: new Uint32Array(buffer),
-      depth: depth,
-      depth32: depth32};
+      array32: new Uint32Array(buffer)};
   };
 
   // Canvas -> Context2D
@@ -48,21 +45,69 @@ module.exports = (function(){
     var vx = Vec.x;
     var vy = Vec.y;
     var vz = Vec.z;
+
+    if (!image.__blend){
+      image.__blend = new Int32Array(w*h*17);
+      image.__blend.fill(-999999);
+    };
+    var blend = image.__blend;
     var buffer = image.array32;
-    var depth = image.__depth || (image.__depth = new Int32Array(w*h));
-    depth.fill(-99999);
+    var positions = [];
     for (var i=0, l=voxelsArray.length; i<l; ++i){
       voxelsArray[i](function(pos, col, buffer){
         var x = vx(pos);
         var y = vy(pos);
         var z = vz(pos);
         var p = y*w + x;
-        if (!depth[p] || z > depth[p]){
-          buffer[p] = col;
-          depth[p] = z;
+
+        // Add some pseudo lighting
+        var k = z*0.25;
+        var r = ((col & 0x000000FF) >>> 0) + k;
+        var g = ((col & 0x0000FF00) >>> 8) + k;
+        var b = ((col & 0x00FF0000) >>> 16) + k;
+        var a = ((col & 0xFF000000) >>> 24);
+        col = r + (g << 8) + (b << 16) + (a << 24);
+
+        if (blend[p*17] === -999999)
+          blend[p*17] = 0,
+          positions.push(p);
+
+        for (var j=0, l=blend[p*17]+1; j<l && j<8; ++j){
+          ++blend[p*17];
+          var targetZ   = blend[1+p*17+j*2+0];
+          var targetCol = blend[1+p*17+j*2+1];
+          if (j === l-1 || z > targetZ){
+            blend[p*17+1+j*2+0] = z;
+            blend[p*17+1+j*2+1] = col;
+            z   = targetZ;
+            col = targetCol;
+          };
         };
+
         return buffer;
       }, buffer);
+    };
+    for (var i=0, l=positions.length; i<l; ++i){
+      var p = positions[i];
+      var b = 0;
+      var r = 0;
+      var g = 0;
+      var a = 0;
+      for (var j=7; j>=0; --j){
+        var c = blend[p*17+1+j*2+1];
+        var cr = (c & 0x000000FF) >>> 0;
+        var cg = (c & 0x0000FF00) >>> 8;
+        var cb = (c & 0x00FF0000) >>> 16;
+        var ca = (c & 0xFF000000) >>> 24;
+        r = r * (1 - ca/255) + cr;
+        g = g * (1 - ca/255) + cg;
+        b = b * (1 - ca/255) + cb;
+        a = 255 - (255 - a) * (1 - ca/255);
+     };
+     var col = r + (g<<8) + (b<<16) + (a<<24);
+      buffer[p] = col;
+      for (var j=0; j<17; ++j)
+        blend[p*17+j] = -999999;
     };
     return image;
   };
