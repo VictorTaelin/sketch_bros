@@ -34,7 +34,8 @@ module.exports = (function(){
 
   // RGBA8, Image* -> Image
   function fill(col, image){
-    image.array32.fill(col);
+    for (var i=0, a=image.array32, l=a.length; i<l; ++i)
+      a[i] = 0;
     return image;
   };
 
@@ -48,7 +49,8 @@ module.exports = (function(){
 
     if (!image.__blend){
       image.__blend = new Int32Array(w*h*17);
-      image.__blend.fill(-999999);
+      for (var i=0; i<w*h*17; ++i)
+        image.__blend[i] = -999999;
     };
     var blend = image.__blend;
     var buffer = image.array32;
